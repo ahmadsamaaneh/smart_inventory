@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: smart-inventory-api
+    runtime: go
+    repo: https://github.com/ahmadsamaaneh/smart_inventory.git
+    branch: main
+    buildCommand: go build -o bin/server ./cmd/api
+    startCommand: ./bin/server
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+      - key: DB_DRIVER
+        value: sqlite
+      - key: DB_DSN
+        value: /var/render/data/inventory.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        value: admin@example.com
+      - key: ADMIN_PASSWORD
+        generateValue: true
+    disk:
+      name: sqlite-data
+      mountPath: /var/render/data
+      sizeGB: 1
