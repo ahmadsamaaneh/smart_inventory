@@ -1,0 +1,96 @@
+### health check
+GET http://localhost:8080/health
+
+### login as admin
+# @name login
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{ "email": "admin@example.com", "password": "Admin123!" }
+
+### register a new customer
+# @name register
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
+
+{ "email": "cust@example.com", "password": "Passw0rd!", "name": "Cust" }
+
+### create a product
+POST http://localhost:8080/api/v1/products
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "sku": "TILE-001", "name": "Marble Tile 60x60", "category": "tiles", "material": "marble", "size": "60x60", "thickness_mm": 10, "price_cents": 4999, "stock": 20, "low_stock_at": 3 }
+
+### list products
+GET http://localhost:8080/api/v1/products?material=marble&page=1&size=10
+
+### get product by id
+GET http://localhost:8080/api/v1/products/1
+
+### update product
+PUT http://localhost:8080/api/v1/products/1
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "price_cents": 5499, "thickness_mm": 12 }
+
+### delete product
+DELETE http://localhost:8080/api/v1/products/1
+Authorization: Bearer {{login.response.body.token}}
+
+### add stock
+POST http://localhost:8080/api/v1/inventory/add
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "product_id": 1, "quantity": 5, "reason": "restock" }
+
+### remove stock
+POST http://localhost:8080/api/v1/inventory/remove
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "product_id": 1, "quantity": 2, "reason": "damaged" }
+
+### check inventory level
+GET http://localhost:8080/api/v1/inventory/1
+Authorization: Bearer {{login.response.body.token}}
+
+### adjust stock (signed delta)
+POST http://localhost:8080/api/v1/products/1/stock
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "delta": -1, "reason": "manual" }
+
+### low stock items
+GET http://localhost:8080/api/v1/inventory/low-stock
+Authorization: Bearer {{login.response.body.token}}
+
+### place an order
+POST http://localhost:8080/api/v1/orders
+Authorization: Bearer {{register.response.body.token}}
+Content-Type: application/json
+
+{
+  "items": [
+    { "product_id": 1, "quantity": 3 },
+    { "product_id": 2, "quantity": 2 }
+  ]
+}
+
+### list my orders
+GET http://localhost:8080/api/v1/orders
+Authorization: Bearer {{register.response.body.token}}
+
+### cancel order
+POST http://localhost:8080/api/v1/orders/1/cancel
+Authorization: Bearer {{register.response.body.token}}
+
+### update order status
+POST http://localhost:8080/api/v1/orders/1/status
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "status": "paid" }
