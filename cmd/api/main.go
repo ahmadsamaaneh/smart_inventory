@@ -72,27 +72,38 @@ func ensureAdmin(db *gorm.DB, email, password string) error {
 		return nil
 	}
 	email = strings.ToLower(strings.TrimSpace(email))
-	var u models.User
-	err := db.Where("email = ?", email).First(&u).Error
-	if err == nil {
-		return nil
-	}
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return err
-	}
 	hash, err := auth.HashPassword(password)
 	if err != nil {
 		return err
 	}
-	admin := &models.User{
-		Email:        email,
-		PasswordHash: hash,
-		Name:         "Administrator",
-		Role:         models.RoleAdmin,
+
+	var u models.User
+	if err := db.Where("email = ?", email).First(&u).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		admin := &models.User{
+			Email:        email,
+			PasswordHash: hash,
+			Name:         "Administrator",
+			Role:         models.RoleAdmin,
+		}
+		if err := db.Create(admin).Error; err != nil {
+			return err
+		}
+		slog.Info("bootstrap admin created", "email", email)
+		return nil
 	}
-	if err := db.Create(admin).Error; err != nil {
+
+	// update password if env var changed
+	if err := db.Model(&u).Update("password_hash", hash).Error; err != nil {
 		return err
 	}
-	slog.Info("bootstrap admin created", "email", email)
+	if u.Role != models.RoleAdmin {
+		if err := db.Model(&u).Update("role", models.RoleAdmin).Error; err != nil {
+			return err
+		}
+	}
+	slog.Info("bootstrap admin updated", "email", email)
 	return nil
 }
